@@ -1,38 +1,30 @@
-# THE LAST COMMIT, ALL THE BEST FOR YOU!
+# darknet on OpenCL
 
-# Project Status: Freeze!
-
-From now on, I will not push anymore my commits to this repository, however, I will be open to your pull requests to approve those and increase the contributors' list, Enjoy! ;-). I think OpenCL has a bright future, I am leaving some open issues, and I hope community will be able to solve them if needed. Thank you! ;-).
-
-# Build on macOS or Ubuntu 20.04
+## Build on macOS or Ubuntu 20.04
 
 Step by step in command prompt guide: https://iblog.isowa.io/2018/05/26/darknet-training
 
-# Build on Windows 10 or 11 x64
+## Build on Windows 10 or 11 x64
 
 Step by step experimental guide: https://iblog.isowa.io/2021/11/20/darknet-on-opencl-on-windows-11-x64
 
-# Take a look 4 x GPUs on macOS (click to see video)
+## Take a look 4 x GPUs on macOS (click to see video)
 
 [![4 x AMD Radeon RX 6900 XT on macOS 11.5.2](https://iblog.isowa.io/wp-content/uploads/2021/08/moria-scaled.jpeg)](https://www.youtube.com/watch?v=W6VOLjgwKNI)
 
-# CLBlast instead of clBLAS for GEMM
-
-git apply patches/clblast.patch
-
-# Darknet-vNext (Improved CUDA DarkNet)
+## Darknet-vNext (Improved CUDA DarkNet)
 
 [DarkNet-vNext Link](https://github.com/sowson/darknet-vNext) If you are looking for engine that has all the same functions, but it is FASTER!
 
-# OpenCV 4
+## OpenCV 4
 
 This engine runs on OpenCV v4! But, OpenCV v3 is also fine!
 
-# YOLO4 on OpenCL
+## YOLO4 on OpenCL
 
 YOLO4 elements are supported, remember in CFG file to use [yolo4] instead of [yolo] to make it work!
 
-# YOLO1, YOLO2, YOLO3 on OpenCL
+## YOLO1, YOLO2, YOLO3 on OpenCL
 
 [![OpenCL YOLO2 Training Multi-GPU-SET](https://iblog.isowa.io/wp-content/uploads/2020/07/gitbug-img.jpg)](https://www.youtube.com/watch?v=o-PV3vmfP-0)
 
