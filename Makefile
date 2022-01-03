@@ -14,6 +14,14 @@
 # sudo apt-get update
 # sudo apt install libclblast-dev
 #
+# CLBlast can be installed from sources as follows:
+# Setup CLBlast for Linux
+# git clone https://github.com/CNugteren/CLBlast.git
+# cd CLBlast; mkdir b; cd b; cmake ..; make; make install; cd ..; rm -r b;
+#
+# For CLBlast apply patch in darknet directory:
+# git apply patches/clblast.patch
+#
 # Setup Mali-GPU OpenCL
 # git clone https://github.com/krrishnarraj/libopencl-stub
 # cd libopencl-stub; mkdir b; cd b; cmake ..; make; make install; cd ..; rm -r b;
@@ -28,11 +36,11 @@
 GPU=1
 GPU_FAST=1
 GPU_MULTI=0
-OPENCV=1
+OPENCV=0
 OPENMP=0
 # Choose only one (works if GPU=1): NVIDIA or AMD or ARM (for VC4CL or MaliGPU)
-NVIDIA=1
-AMD=0
+NVIDIA=0
+AMD=1
 ARM=0
 BENCHMARK=0
 LOSS_ONLY=0
@@ -50,7 +58,10 @@ AR=ar
 ARFLAGS=rcs
 OPTS=
 COMMON= -Iinclude/ -Isrc/
-CFLAGS=-Wall -Wno-unknown-pragmas -Wno-unused-variable -Wno-unused-result -Wno-deprecated-declarations -Wno-return-type-c-linkage -Wno-unused-function -Wfatal-errors -fPIC
+#CLBLAST_CFLAGS=
+#CLBLAST_LDFLAGS=
+CFLAGS=-Wall -Wno-unknown-pragmas -Wno-unused-variable -Wno-unused-result -Wno-deprecated-declarations -Wno-return-type-c-linkage -Wno-unused-function -Wfatal-errors -fPIC ${CLBLAST_CFLAGS}
+OPENCL_FLAGS=-framework OpenCL
 
 ifeq ($(ARM), 1)
 LDFLAGS= -lm -lpthread
@@ -85,12 +96,12 @@ ifeq ($(ARM), 1)
 ifeq ($(GPU), 1)
 COMMON+= -DGPU -DOPENCL -DCL_TARGET_OPENCL_VERSION=120 -DARM 
 CFLAGS+= -DGPU -DOPENCL -DARM -I/usr/include/ -I/usr/local/include/
-LDFLAGS+= -L/usr/local/lib -L/usr/lib/arm-linux-gnueabihf -lOpenCL
+LDFLAGS+= -L/usr/local/lib -L/usr/lib/arm-linux-gnueabihf ${OPENCL_FLAGS}
 LDFLAGS+= -L/usr/lib
 else
 COMMON+= -DCL_TARGET_OPENCL_VERSION=120 -DARM
 CFLAGS+= -DARM -I/usr/include/ -I/usr/local/include/
-LDFLAGS+= -L/usr/local/lib -L/usr/lib/arm-linux-gnueabihf -lOpenCL
+LDFLAGS+= -L/usr/local/lib -L/usr/lib/arm-linux-gnueabihf ${OPENCL_FLAGS}
 LDFLAGS+= -L/usr/lib
 endif
 endif
@@ -99,14 +110,14 @@ ifeq ($(GPU), 1)
 ifeq ($(AMD), 1)
 COMMON+= -DGPU -DOPENCL -DCL_TARGET_OPENCL_VERSION=120
 CFLAGS+= -DGPU -DOPENCL -I/usr/include/
-LDFLAGS+= -L/usr/lib/x86_64-linux-gnu/ -lOpenCL -lclBLAS -L/usr/local/lib 
-LDFLAGS+= -L/usr/lib64
+LDFLAGS+= ${OPENCL_FLAGS} ${CLBLAST_LDFLAGS} -lclblast -L/usr/local/lib
+LDFLAGS+= -L/usr/lib64 -L/usr/lib/x86_64-linux-gnu/
 endif
 ifeq ($(NVIDIA), 1)
 COMMON+= -DGPU -DOPENCL
 CFLAGS+= -DGPU -DOPENCL -I/usr/include/ -I/usr/local/cuda/include/
-LDFLAGS+= -L/usr/local/cuda/lib64 -lOpenCL -L/usr/lib64 -lclBLAS -L/usr/local/lib
-LDFLAGS+= -L/usr/lib64
+LDFLAGS+= ${OPENCL_FLAGS} ${CLBLAST_LDFLAGS} -lclblast -L/usr/local/lib
+LDFLAGS+= -L/usr/lib64 -L/usr/local/cuda/lib64
 endif
 endif
 

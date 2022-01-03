@@ -150,12 +150,12 @@ if (DARKNET_GPU)
             #hunter_add_package(clBLAS)
             #find_package(clBLAS CONFIG REQUIRED)
         else()
-  	        find_package(clBLAS REQUIRED PATHS ${clBLAS_DIR})
-            add_library(clblas INTERFACE IMPORTED)
-            set_property(TARGET clblas PROPERTY
-                INTERFACE_INCLUDE_DIRECTORIES ${CLBLAS_INCLUDE_DIRS})
-            set_property(TARGET clblas PROPERTY
-                INTERFACE_LINK_LIBRARIES ${CLBLAS_LIBRARIES})
+            find_package(clblast REQUIRED)
+            add_library(CLBlast INTERFACE IMPORTED)
+            set_property(TARGET CLBlast PROPERTY
+                INTERFACE_INCLUDE_DIRECTORIES ${CLBLAST_INCLUDE_DIRS})
+            set_property(TARGET CLBlast PROPERTY
+                INTERFACE_LINK_LIBRARIES ${CLBLAST_LIBRARIES})
         endif()
     endif()
 endif()
@@ -414,7 +414,7 @@ function (ConfigureBinary target)
 			target_link_libraries(${target} opencl)
 		endif()
 	elseif (DARKNET_GPU)
-        target_link_libraries(${target} opencl clblas)
+        target_link_libraries(${target} opencl clblast)
     endif()
 
     if (DARKNET_OPENCV)

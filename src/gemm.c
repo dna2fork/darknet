@@ -168,12 +168,13 @@ void gemm_cpu(int TA, int TB, int M, int N, int K, float ALPHA,
 #ifdef GPU
 
 #ifndef ARM
-#include "clBLAS.h"
+#include <clblast_c.h>
 #endif
 
 void gemm_kernel_init(void)
 {
 #ifndef ARM
+/*
     cl_int clErr;
     clErr = clblasSetup();
 
@@ -181,13 +182,16 @@ void gemm_kernel_init(void)
     {
         printf("gemm_kernel_init: Could not setup clBLAS. Errorcode: %d\n", clErr);
     }
+*/
 #endif
 }
 
 void gemm_kernel_release(void)
 {
 #ifndef ARM
+/*
     clblasTeardown();
+*/
 #endif
 }
 
@@ -215,32 +219,32 @@ void gemm_offset_gpu(
     t = clock();
 #endif
 
-    cl_int clErr;
+    CLBlastStatusCode clErr;
 
     cl_command_queue que = opencl_queues[opencl_device_id_t];
 
-    clErr = clblasSgemm(clblasRowMajor,
-                        (TA ? clblasTrans : clblasNoTrans),
-                        (TB ? clblasTrans : clblasNoTrans),
+    clErr = CLBlastSgemm(CLBlastLayoutRowMajor,
+                        (TA ? CLBlastTransposeYes : CLBlastTransposeNo),
+                        (TB ? CLBlastTransposeYes : CLBlastTransposeNo),
                         M, N, K,
                         ALPHA,
                         A_gpu.mem, offset_A, lda,
                         B_gpu.mem, offset_B, ldb,
                         BETA,
                         C_gpu.mem, offset_C, ldc,
-                        1, &que, 0, NULL, NULL);
+                        &que, NULL);
 
     // clFlush(que);
 
 #ifdef BENCHMARK
     t = clock() - t;
     double time_taken = ((double)t);
-    printf("%s\t%d\n", "clblasSgemm", (int)time_taken);
+    printf("%s\t%d\n", "CLBlastSgemm", (int)time_taken);
 #endif
 
-    if (clErr != CL_SUCCESS)
+    if (clErr != CLBlastSuccess)
     {
-        printf("gemm_gpu: clblasSgemm failed. Errorcode: %d\n", clErr);
+        printf("gemm_gpu: CLBlastSgemm failed. Errorcode: %d\n", clErr);
     }
 }
 #endif
