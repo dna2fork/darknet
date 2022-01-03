@@ -1,4 +1,5 @@
 from ctypes import *
+import os
 import math
 import random
 
@@ -50,8 +51,10 @@ class METADATA(Structure):
 
     
 
-#lib = CDLL("/home/pjreddie/documents/darknet/libdarknet.so", RTLD_GLOBAL)
-lib = CDLL("libdarknet.so", RTLD_GLOBAL)
+LIBDARKNETSO = os.getenv("LIBDARKNETSO") or os.path.join(
+    os.path.dirname(__file__), "..", "libdarknet.so"
+)
+lib = CDLL(LIBDARKNETSO, RTLD_GLOBAL)
 lib.network_width.argtypes = [c_void_p]
 lib.network_width.restype = c_int
 lib.network_height.argtypes = [c_void_p]
@@ -133,7 +136,7 @@ def classify(net, meta, im):
     return res
 
 def detect(net, meta, image, thresh=.5, hier_thresh=.5, nms=.45):
-    im = load_image(image, 0, 0)
+    im = load_image(c_char_p(image), 0, 0)
     num = c_int(0)
     pnum = pointer(num)
     predict_image(net, im)
@@ -158,12 +161,13 @@ if __name__ == "__main__":
     #meta = load_meta("cfg/imagenet1k.data")
     #r = classify(net, meta, im)
     #print r[:10]
-    gpu = c_int(0)
+    import sys
+    gpu = c_int(int(sys.argv[1]))
     pgpu = pointer(gpu)
     opencl_init(pgpu, 1)
-    net = load_net("cfg/tiny-yolo.cfg", "tiny-yolo.weights", 0)
-    meta = load_meta("cfg/coco.data")
-    r = detect(net, meta, "data/dog.jpg")
-    print r
+    net = load_net(c_char_p(b"cfg/yolov3.cfg"), c_char_p(b"local/yolov3.weights"), 0)
+    meta = load_meta(c_char_p(b"cfg/coco.data"))
+    r = detect(net, meta, b"data/dog.jpg")
+    print(r)
     
 
