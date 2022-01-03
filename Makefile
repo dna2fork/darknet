@@ -36,7 +36,7 @@
 GPU=1
 GPU_FAST=1
 GPU_MULTI=0
-OPENCV=0
+OPENCV=1
 OPENMP=0
 # Choose only one (works if GPU=1): NVIDIA or AMD or ARM (for VC4CL or MaliGPU)
 NVIDIA=0
@@ -58,10 +58,12 @@ AR=ar
 ARFLAGS=rcs
 OPTS=
 COMMON= -Iinclude/ -Isrc/
-#CLBLAST_CFLAGS=
-#CLBLAST_LDFLAGS=
+CLBLAST_DIR  ?= /usr/local
+OPENCV_DIR   ?= /usr/local
+OPENCL_FLAGS ?=-lOpenCL
+CLBLAST_CFLAGS=-I${CLBLAST_DIR}/include
+CLBLAST_LDFLAGS=-L${CLBLAST_DIR}/lib
 CFLAGS=-Wall -Wno-unknown-pragmas -Wno-unused-variable -Wno-unused-result -Wno-deprecated-declarations -Wno-return-type-c-linkage -Wno-unused-function -Wfatal-errors -fPIC ${CLBLAST_CFLAGS}
-OPENCL_FLAGS=-framework OpenCL
 
 ifeq ($(ARM), 1)
 LDFLAGS= -lm -lpthread
@@ -88,8 +90,8 @@ CFLAGS+=$(OPTS)
 ifeq ($(OPENCV), 1) 
 COMMON+= -DOPENCV
 CFLAGS+= -DOPENCV
-LDFLAGS+= `pkg-config --libs opencv4`
-COMMON+= `pkg-config --cflags opencv4`
+LDFLAGS+= -L${OPENCV_DIR}/lib -lopencv_core -lopencv_highgui -lopencv_imgcodecs -lopencv_videoio
+COMMON+= -I${OPENCV_DIR}/include -I${OPENCV_DIR}/include/opencv4
 endif
 
 ifeq ($(ARM), 1)
@@ -169,7 +171,7 @@ $(SLIB): $(OBJS)
 	$(CC) $(CFLAGS) -shared $^ -o $@ $(LDFLAGS)
 
 $(OBJDIR)%.o: %.cpp $(DEPS)
-	$(CPP) $(COMMON) $(CFLAGS) -c $< -o $@
+	$(CPP) $(COMMON) $(CFLAGS) -c -std=c++11 $< -o $@
 
 $(OBJDIR)%.o: %.c $(DEPS)
 	$(CC) $(COMMON) $(CFLAGS) -c $< -o $@
