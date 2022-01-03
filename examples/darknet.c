@@ -425,27 +425,24 @@ int main(int argc, char **argv)
     }
     int ngpus = 0;
     int *gpus = 0;
-    if(read_arg(argc, argv, "-nogpu")) {
+    if(find_arg(argc, argv, "-nogpu")) {
         ngpus = 0;
         gpu_index = -1;
-    }
-    else if(read_arg(argc, argv, "-i")) {
+    } else if(read_arg(argc, argv, "-i")) {
         gpus = (int*)calloc(1, sizeof(int));
         gpus[0] = find_int_arg(argc, argv, "-i", 0);
         ngpus = 1;
         gpu_index = 1;
-    }
-    else if(read_arg(argc, argv, "-gpus")) {
+    } else if(read_arg(argc, argv, "-gpus")) {
         char *gpu_list = read_char_arg(argc, argv, "-gpus", *argv);
         gpus = read_intlist(gpu_list, &ngpus, gpu_index);
         gpu_index = ngpus;
-    }
-	else {
+    } else {
         gpus = (int*)calloc(1, sizeof(int));
         gpus[0] = 0;
         ngpus = 1;
         gpu_index = 1;
-	}
+    }
 
 #ifndef GPU
     gpu_index = -1;
