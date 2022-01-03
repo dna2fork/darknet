@@ -1,15 +1,17 @@
 #!/bin/bash
 
+set -xe
+
 # Clone COCO API
-git clone https://github.com/pdollar/coco
+git clone git://github.com/pdollar/coco
 cd coco
 
 mkdir images
 cd images
 
 # Download Images
-wget -c https://pjreddie.com/media/files/train2014.zip
-wget -c https://pjreddie.com/media/files/val2014.zip
+curl -L -O https://pjreddie.com/media/files/train2014.zip
+curl -L -O https://pjreddie.com/media/files/val2014.zip
 
 # Unzip
 unzip -q train2014.zip
@@ -18,10 +20,10 @@ unzip -q val2014.zip
 cd ..
 
 # Download COCO Metadata
-wget -c https://pjreddie.com/media/files/instances_train-val2014.zip
-wget -c https://pjreddie.com/media/files/coco/5k.part
-wget -c https://pjreddie.com/media/files/coco/trainvalno5k.part
-wget -c https://pjreddie.com/media/files/coco/labels.tgz
+curl -L -O https://pjreddie.com/media/files/instances_train-val2014.zip
+curl -L -O https://pjreddie.com/media/files/coco/5k.part
+curl -L -O https://pjreddie.com/media/files/coco/trainvalno5k.part
+curl -L -O https://pjreddie.com/media/files/coco/labels.tgz
 tar xzf labels.tgz
 unzip -q instances_train-val2014.zip
 
