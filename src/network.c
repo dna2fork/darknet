@@ -349,17 +349,18 @@ void update_network(network *netp)
 
 void calc_network_cost(network *netp)
 {
-	network net = *netp;
-	int i;
-	float sum = 0;
-	int count = 0;
-	for(i = 0; i < net.n; ++i){
-		if(net.layers[i].cost){
-			sum += net.layers[i].cost[0];
-			++count;
-		}
-	}
-	*net.cost = sum/count;
+   network net = *netp;
+   int i;
+   float sum = 0;
+   int count = 0;
+   for(i = 0; i < net.n; ++i) {
+      if(net.layers[i].cost){
+         sum += net.layers[i].cost[0];
+         ++count;
+      }
+   }
+   if (!count) count = 1;
+   *net.cost = sum/count;
 }
 
 int get_predicted_class_network(network *net)

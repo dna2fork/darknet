@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <assert.h>
+
 
 void gemm_bin(int M, int N, int K, float ALPHA, 
         char  *A, int lda, 
@@ -245,6 +247,7 @@ void gemm_offset_gpu(
     if (clErr != CLBlastSuccess)
     {
         printf("gemm_gpu: CLBlastSgemm failed. Errorcode: %d\n", clErr);
+        assert(0);
     }
 }
 #endif

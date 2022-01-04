@@ -26,6 +26,23 @@ int gpu_index = 1;
 
 #include "blas.h"
 
+#include <execinfo.h>
+static void print_trace (void) {
+   void *array[10];
+   char **strings;
+   int size, i;
+   size = backtrace(array, 10);
+   strings = backtrace_symbols(array, size);
+   if (strings) {
+      printf("=====================\n");
+      printf("show %d stack frames.\n", size);
+      for (i = 0; i < size; i++) printf("%s\n", strings[i]);
+   } else {
+      printf("=====================\n<trace> nothing.\n");
+   }
+   free (strings);
+}
+
 int *gpusg;
 int ngpusg;
 #ifdef WIN32
@@ -717,8 +734,9 @@ void opencl_dump_mem_stat()
 cl_mem_ext opencl_make_array(float *x, size_t n)
 {
     if(!n) {
-        printf("error in cl_mem creation for float[]!\n");
-        assert(1);
+        printf("warning[opencl_make_array]: creation for float[] n=0!\n");
+        print_trace();
+        assert(0);
     }
 
     cl_mem_ext buf;
@@ -737,10 +755,13 @@ cl_mem_ext opencl_make_array(float *x, size_t n)
 #else
     buf.ptr = x;
     if (!buf.ptr) {
-       buf.ptr = (float*) calloc(n * sizeof(float), 1);
+       int j; float *zero_ptr;
+       zero_ptr = (float*) calloc(n * sizeof(float), 1);
+       for (j = n - 1; j >= 0; j--) zero_ptr[j] = 0.f;
+       buf.ptr = zero_ptr;
     }
     buf.org = clCreateBuffer(opencl_context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-                             buf.len * buf.obs, buf.ptr,
+                             n * buf.obs, buf.ptr,
                              &clErr);
 #endif
 
@@ -761,8 +782,9 @@ cl_mem_ext opencl_make_array(float *x, size_t n)
 cl_mem_ext opencl_make_int_array(int *x, size_t n)
 {
     if(!n) {
-        printf("error in cl_mem creation for int[]!\n");
-        assert(1);
+        printf("warning[opencl_make_int_array] creation for int[] n=0!\n");
+        print_trace();
+        assert(0);
     }
 
     cl_mem_ext buf;
@@ -780,11 +802,14 @@ cl_mem_ext opencl_make_int_array(int *x, size_t n)
                              &clErr);
 #else
     buf.ptr = x;
-    if (!buf.ptr) {
-       buf.ptr = (int*) calloc(n * sizeof(int), 1);
+    if (n && !buf.ptr) {
+       int j; int *zero_ptr;
+       zero_ptr = (int*) calloc(n * sizeof(int), 1);
+       for (j = n - 1; j >= 0; j--) zero_ptr[j] = 0;
+       buf.ptr = zero_ptr;
     }
     buf.org = clCreateBuffer(opencl_context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-                             buf.len * buf.obs, buf.ptr,
+                             n * buf.obs, buf.ptr,
                              &clErr);
 #endif
 
@@ -1032,7 +1057,6 @@ void opencl_free_gpu_only(cl_mem_ext x_gpu)
 }
 
 cl_mem_ext cln(cl_mem_ext buf) {
-    if (buf.len == 0) return buf;
     buf.mem = buf.org;
     buf.off = 0;
     buf.cnt = 0;
@@ -1040,27 +1064,26 @@ cl_mem_ext cln(cl_mem_ext buf) {
 }
 
 cl_mem_ext inc(cl_mem_ext buf, int inc, size_t len) {
-    if (buf.len == 0) return buf;
     buf.off += inc;
     buf.cnt += 1;
     return mov(buf, len);
 }
 
 cl_mem_ext dec(cl_mem_ext buf, int dec, size_t len) {
-    if (buf.len == 0) return buf;
     buf.off -= dec;
     buf.cnt -= 1;
     return mov(buf, len);
 }
 
 cl_mem_ext mov(cl_mem_ext buf, size_t len) {
-    if (buf.len == 0) return buf;
-
     cl_buffer_region region;
     region.origin = buf.off * buf.obs;
     region.size = len != 0 ? len * buf.obs : (buf.len - buf.off) * buf.obs;
     size_t total = buf.len * buf.obs;
-    if (region.origin + region.size > total) region.size = total - region.origin;
+    if (region.origin + region.size > total) {
+       region.size = total - region.origin;
+       // region.size should be 0 here
+    }
 
     cl_int clErr = 0;
     if (region.size) {
@@ -1072,28 +1095,26 @@ cl_mem_ext mov(cl_mem_ext buf, size_t len) {
     if (clErr != CL_SUCCESS)
     {
         printf("could not create sub-buffer on device. error: %s\n", clCheckError(clErr));
+        print_trace();
+        assert(0);
     }
 
     return buf;
 }
 
 cl_mem_ext add(cl_mem_ext buf, int inc, size_t len) {
-    if (buf.len == 0) return buf;
     buf.off += inc;
     buf.cnt += 1;
     return upd(buf, len);
 }
 
 cl_mem_ext rem(cl_mem_ext buf, int dec, size_t len) {
-    if (buf.len == 0) return buf;
     buf.off -= dec;
     buf.cnt -= 1;
     return upd(buf, len);
 }
 
 cl_mem_ext upd(cl_mem_ext buf, size_t len) {
-    if (buf.len == 0) return buf;
-
     cl_mem_ext ret;
     ret.org = buf.org;
 
@@ -1114,7 +1135,10 @@ cl_mem_ext upd(cl_mem_ext buf, size_t len) {
     region.origin = ret.off * ret.obs;
     region.size = len != 0 ? len * ret.obs : (ret.len - ret.off) * ret.obs;
     size_t total = ret.len * ret.obs;
-    if (region.origin + region.size > total) region.size = total - region.origin;
+    if (region.origin + region.size > total) {
+       region.size = total - region.origin;
+       // region.size should be 0 here
+    }
 
     cl_int clErr = 0;
     if (region.size) {
@@ -1126,6 +1150,8 @@ cl_mem_ext upd(cl_mem_ext buf, size_t len) {
     if (clErr != CL_SUCCESS)
     {
         printf("could not create sub-buffer on device. error: %s\n", clCheckError(clErr));
+        print_trace();
+        assert(0);
     }
 
     return ret;
