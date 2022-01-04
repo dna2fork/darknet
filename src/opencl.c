@@ -595,6 +595,24 @@ void opencl_kernel_local(cl_kernel kernel, const dim2 globalItemSize, const dim2
     localItems[0] = localItemSize.x;
     localItems[1] = localItemSize.y;
 
+    union {
+       size_t   one;
+       size_t   array[3];
+       cl_ulong size;
+    } val;
+    // XXX: can we calc preferred work group size when init opencl
+    //      instead of getting its value on-the-fly
+    clGetKernelWorkGroupInfo(
+        kernel, opencl_devices[opencl_device_id_t],
+        // CL_KERNEL_GLOBAL_WORK_SIZE, // size_t[3]
+        // CL_KERNEL_WORK_GROUP_SIZE, // size_t
+        // CL_KERNEL_COMPILE_WORK_GROUP_SIZE, // size_t[3]
+        // CL_KERNEL_LOCAL_MEM_SIZE, // cl_ulong
+        CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, // cl_ulong
+        sizeof(val), &val, NULL
+    );
+    if (localItemSize.x >= val.size) localItems[0] = (size_t)val.size;
+
 #ifdef BENCHMARK
     clock_t t;
     t = clock();
@@ -698,13 +716,12 @@ void opencl_dump_mem_stat()
 
 cl_mem_ext opencl_make_array(float *x, size_t n)
 {
-    if(!x || !n) {
-        printf("error in cl_mem creation!");
+    if(!n) {
+        printf("error in cl_mem creation for float[]!\n");
         assert(1);
     }
 
     cl_mem_ext buf;
-
     buf.len = n;
     buf.obs = sizeof(cl_float);
     buf.off = 0;
@@ -714,13 +731,14 @@ cl_mem_ext opencl_make_array(float *x, size_t n)
 
 #ifdef WIN32
     buf.ptr = NULL;
-
     buf.org = clCreateBuffer(opencl_context, CL_MEM_READ_WRITE,
                              buf.len * buf.obs, buf.ptr,
                              &clErr);
 #else
     buf.ptr = x;
-
+    if (!buf.ptr) {
+       buf.ptr = (float*) calloc(n * sizeof(float), 1);
+    }
     buf.org = clCreateBuffer(opencl_context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
                              buf.len * buf.obs, buf.ptr,
                              &clErr);
@@ -730,13 +748,11 @@ cl_mem_ext opencl_make_array(float *x, size_t n)
         printf("could create buffer on device. error: %s\n", clCheckError(clErr));
 
     buf.mem = buf.org;
-
     buf.cln = cln;
     buf.inc = inc;
     buf.dec = dec;
     buf.add = add;
     buf.rem = rem;
-
     buf.que = opencl_queues[opencl_device_id_t];
 
     return buf;
@@ -744,13 +760,12 @@ cl_mem_ext opencl_make_array(float *x, size_t n)
 
 cl_mem_ext opencl_make_int_array(int *x, size_t n)
 {
-    if(!x || !n) {
-        printf("error in cl_mem creation!");
+    if(!n) {
+        printf("error in cl_mem creation for int[]!\n");
         assert(1);
     }
 
     cl_mem_ext buf;
-
     buf.len = n;
     buf.obs = sizeof(cl_int);
     buf.off = 0;
@@ -760,13 +775,14 @@ cl_mem_ext opencl_make_int_array(int *x, size_t n)
 
 #ifdef WIN32
     buf.ptr = NULL;
-
     buf.org = clCreateBuffer(opencl_context, CL_MEM_READ_WRITE,
                              buf.len * buf.obs, buf.ptr,
                              &clErr);
 #else
     buf.ptr = x;
-
+    if (!buf.ptr) {
+       buf.ptr = (int*) calloc(n * sizeof(int), 1);
+    }
     buf.org = clCreateBuffer(opencl_context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
                              buf.len * buf.obs, buf.ptr,
                              &clErr);
@@ -782,7 +798,6 @@ cl_mem_ext opencl_make_int_array(int *x, size_t n)
     buf.dec = dec;
     buf.add = add;
     buf.rem = rem;
-
     buf.que = opencl_queues[opencl_device_id_t];
 
     return buf;
@@ -1017,6 +1032,7 @@ void opencl_free_gpu_only(cl_mem_ext x_gpu)
 }
 
 cl_mem_ext cln(cl_mem_ext buf) {
+    if (buf.len == 0) return buf;
     buf.mem = buf.org;
     buf.off = 0;
     buf.cnt = 0;
@@ -1024,25 +1040,34 @@ cl_mem_ext cln(cl_mem_ext buf) {
 }
 
 cl_mem_ext inc(cl_mem_ext buf, int inc, size_t len) {
+    if (buf.len == 0) return buf;
     buf.off += inc;
     buf.cnt += 1;
     return mov(buf, len);
 }
 
 cl_mem_ext dec(cl_mem_ext buf, int dec, size_t len) {
+    if (buf.len == 0) return buf;
     buf.off -= dec;
     buf.cnt -= 1;
     return mov(buf, len);
 }
 
 cl_mem_ext mov(cl_mem_ext buf, size_t len) {
-    cl_buffer_region region;
+    if (buf.len == 0) return buf;
 
+    cl_buffer_region region;
     region.origin = buf.off * buf.obs;
     region.size = len != 0 ? len * buf.obs : (buf.len - buf.off) * buf.obs;
+    size_t total = buf.len * buf.obs;
+    if (region.origin + region.size > total) region.size = total - region.origin;
 
     cl_int clErr = 0;
-    buf.mem = clCreateSubBuffer(buf.org, CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION, &region, &clErr);
+    if (region.size) {
+       buf.mem = clCreateSubBuffer(buf.org, CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION, &region, &clErr);
+    } else {
+       buf.mem = NULL;
+    }
 
     if (clErr != CL_SUCCESS)
     {
@@ -1053,20 +1078,23 @@ cl_mem_ext mov(cl_mem_ext buf, size_t len) {
 }
 
 cl_mem_ext add(cl_mem_ext buf, int inc, size_t len) {
+    if (buf.len == 0) return buf;
     buf.off += inc;
     buf.cnt += 1;
     return upd(buf, len);
 }
 
 cl_mem_ext rem(cl_mem_ext buf, int dec, size_t len) {
+    if (buf.len == 0) return buf;
     buf.off -= dec;
     buf.cnt -= 1;
     return upd(buf, len);
 }
 
 cl_mem_ext upd(cl_mem_ext buf, size_t len) {
-    cl_mem_ext ret;
+    if (buf.len == 0) return buf;
 
+    cl_mem_ext ret;
     ret.org = buf.org;
 
     ret.len = buf.len;
@@ -1085,9 +1113,15 @@ cl_mem_ext upd(cl_mem_ext buf, size_t len) {
 
     region.origin = ret.off * ret.obs;
     region.size = len != 0 ? len * ret.obs : (ret.len - ret.off) * ret.obs;
+    size_t total = ret.len * ret.obs;
+    if (region.origin + region.size > total) region.size = total - region.origin;
 
     cl_int clErr = 0;
-    ret.mem = clCreateSubBuffer(ret.org, CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION, &region, &clErr);
+    if (region.size) {
+       ret.mem = clCreateSubBuffer(ret.org, CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION, &region, &clErr);
+    } else {
+       ret.mem = NULL;
+    }
 
     if (clErr != CL_SUCCESS)
     {
