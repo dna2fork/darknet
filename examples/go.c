@@ -1,4 +1,5 @@
 #include "darknet.h"
+#include "darknet_env.h"
 
 #include <assert.h>
 #include <math.h>
@@ -162,7 +163,7 @@ void train_go(char *cfgfile, char *weightfile, char *filename, int *gpus, int ng
     network *net = nets[0];
     printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
 
-    char *backup_directory = "/home/piotr/backup/";
+    char *backup_directory = get_backup_directory();
 
     char buff[256];
     moves m = load_go_moves(filename);

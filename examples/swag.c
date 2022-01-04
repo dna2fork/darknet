@@ -1,4 +1,5 @@
 #include "darknet.h"
+#include "darknet_env.h"
 #ifdef WIN32
 #include <time.h>
 #else
@@ -8,7 +9,7 @@
 void train_swag(char *cfgfile, char *weightfile)
 {
     char *train_images = "data/voc.0712.trainval";
-    char *backup_directory = "/home/piotr/backup/";
+    char *backup_directory = get_backup_directory();
     srand(time(0));
     char *base = basecfg(cfgfile);
     printf("%s\n", base);

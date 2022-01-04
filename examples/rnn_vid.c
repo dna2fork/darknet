@@ -1,11 +1,12 @@
 #include "darknet.h"
+#include "darknet_env.h"
 #include "image.h"
 
 #ifdef OPENCV_C
 void train_vid_rnn(char *cfgfile, char *weightfile)
 {
     char *train_videos = "data/vid/train.txt";
-    char *backup_directory = "/home/piotr/backup/";
+    char *backup_directory = get_backup_directory();
     srand(time(0));
     char *base = basecfg(cfgfile);
     printf("%s\n", base);

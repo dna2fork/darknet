@@ -1,4 +1,5 @@
 #include "darknet.h"
+#include "darknet_env.h"
 
 char *dice_labels[] = {"face1","face2","face3","face4","face5","face6"};
 
@@ -7,7 +8,7 @@ void train_dice(char *cfgfile, char *weightfile)
     srand(time(0));
     float avg_loss = -1;
     char *base = basecfg(cfgfile);
-    char *backup_directory = "/home/piotr/backup/";
+    char *backup_directory = get_backup_directory();
     printf("%s\n", base);
     network net = *parse_network_cfg(cfgfile);
     if(weightfile){

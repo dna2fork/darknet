@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "network.h"
 #include "detection_layer.h"
@@ -13,8 +14,12 @@ void train_compare(char *cfgfile, char *weightfile)
     srand(time(0));
     float avg_loss = -1;
     char *base = basecfg(cfgfile);
-    char *backup_directory = "/home/piotr/backup/";
+    char *backup_directory;
+
     printf("%s\n", base);
+    backup_directory = getenv("DARKNET_BACKUP_DIR");
+    if (!strlen(backup_directory)) backup_directory = "/tmp/";
+
     network net = *parse_network_cfg(cfgfile);
     if(weightfile){
         load_weights(&net, weightfile);

@@ -1,4 +1,5 @@
 #include "darknet.h"
+#include "darknet_env.h"
 #include "image.h"
 
 #include <math.h>
@@ -11,7 +12,7 @@ void train_lsd3(char *fcfg, char *fweight, char *gcfg, char *gweight, char *acfg
     char *train_images = "/home/piotr/data/imagenet/imagenet1k.train.list";
     //char *style_images = "/home/piotr/data/coco/trainvalno5k.txt";
     char *style_images = "/home/piotr/zelda.txt";
-    char *backup_directory = "/home/piotr/backup/";
+    char *backup_directory = get_backup_directory();
     srand(time(0));
     network fnet = load_network(fcfg, fweight, clear);
     network gnet = load_network(gcfg, gweight, clear);
@@ -201,7 +202,7 @@ void train_pix2pix(char *cfg, char *weight, char *acfg, char *aweight, int clear
     //char *train_images = "/home/piotr/data/coco/train1.txt";
     //char *train_images = "/home/piotr/data/coco/trainvalno5k.txt";
     char *train_images = "/home/piotr/data/imagenet/imagenet1k.train.list";
-    char *backup_directory = "/home/piotr/backup/";
+    char *backup_directory = get_backup_directory();
     srand(time(0));
     char *base = basecfg(cfg);
     char *abase = basecfg(acfg);
@@ -518,7 +519,7 @@ void set_network_alpha_beta(network *net, float alpha, float beta)
 void train_prog(char *cfg, char *weight, char *acfg, char *aweight, int clear, int display, char *train_images, int maxbatch)
 {
 #ifdef GPU
-    char *backup_directory = "/home/piotr/backup/";
+    char *backup_directory = get_backup_directory();
     srand(time(0));
     char *base = basecfg(cfg);
     char *abase = basecfg(acfg);
@@ -675,7 +676,7 @@ void train_prog(char *cfg, char *weight, char *acfg, char *aweight, int clear, i
 void train_dcgan(char *cfg, char *weight, char *acfg, char *aweight, int clear, int display, char *train_images, int maxbatch)
 {
 #ifdef GPU
-    char *backup_directory = "/home/piotr/backup/";
+    char *backup_directory = get_backup_directory();
     srand(time(0));
     char *base = basecfg(cfg);
     char *abase = basecfg(acfg);
@@ -873,7 +874,7 @@ void train_colorizer(char *cfg, char *weight, char *acfg, char *aweight, int cle
     //char *train_images = "/home/piotr/data/coco/train1.txt";
     //char *train_images = "/home/piotr/data/coco/trainvalno5k.txt";
     char *train_images = "/home/piotr/data/imagenet/imagenet1k.train.list";
-    char *backup_directory = "/home/piotr/backup/";
+    char *backup_directory = get_backup_directory();
     srand(time(0));
     char *base = basecfg(cfg);
     char *abase = basecfg(acfg);
@@ -1043,7 +1044,7 @@ void train_colorizer(char *cfg, char *weight, char *acfg, char *aweight, int cle
    {
 #ifdef GPU
 char *train_images = "/home/piotr/data/coco/trainvalno5k.txt";
-char *backup_directory = "/home/piotr/backup/";
+char *backup_directory = get_backup_directory();
 srand(time(0));
 char *base = basecfg(cfgfile);
 printf("%s\n", base);
@@ -1218,7 +1219,7 @@ save_weights(net, buff);
    void train_lsd(char *cfgfile, char *weightfile, int clear)
    {
    char *train_images = "/home/piotr/data/coco/trainvalno5k.txt";
-   char *backup_directory = "/home/piotr/backup/";
+   char *backup_directory = get_backup_directory();
    srand(time(0));
    char *base = basecfg(cfgfile);
    printf("%s\n", base);

@@ -1,8 +1,9 @@
 #include "darknet.h"
+#include "darknet_env.h"
 
 void train_writing(char *cfgfile, char *weightfile)
 {
-    char *backup_directory = "/home/piotr/backup/";
+    char *backup_directory = get_backup_directory();
     srand(time(0));
     float avg_loss = -1;
     char *base = basecfg(cfgfile);

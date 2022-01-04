@@ -1,9 +1,10 @@
 #include "darknet.h"
+#include "darknet_env.h"
 
 void train_super(char *cfgfile, char *weightfile, int clear)
 {
     char *train_images = "/data/imagenet/imagenet1k.train.list";
-    char *backup_directory = "/home/piotr/backup/";
+    char *backup_directory = get_backup_directory();
     srand(time(0));
     char *base = basecfg(cfgfile);
     printf("%s\n", base);

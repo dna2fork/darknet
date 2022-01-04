@@ -1,11 +1,12 @@
 #include "darknet.h"
+#include "darknet_env.h"
 
 void train_tag(char *cfgfile, char *weightfile, int clear)
 {
     srand(time(0));
     float avg_loss = -1;
     char *base = basecfg(cfgfile);
-    char *backup_directory = "/home/piotr/backup/";
+    char *backup_directory = get_backup_directory();
     printf("%s\n", base);
     network *net = load_network(cfgfile, weightfile, clear);
     printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);

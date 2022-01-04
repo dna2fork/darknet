@@ -200,6 +200,7 @@ if (DARKNET_UNIT)
 endif()
 
 set (DARKNET_SOURCES
+    "examples/darknet_env.c"
     "src/activation_layer.c"
     "src/activations.c"
     "examples/art.c"
